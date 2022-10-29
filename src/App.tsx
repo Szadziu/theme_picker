@@ -1,16 +1,16 @@
 import ThemePicker from './components/ThemePicker/ThemePicker';
-import CreateThemeContext from './contexts/CreateThemeContext';
+import ThemeContext from './contexts/ThemeContext';
+import data from './data/mockData.json';
 
 const App = () => {
-    const value = {
-        name: 'Świetny kolor',
-    };
-
+    const value = data;
     return (
         <div className="App">
-            {/* <CreateThemeContext.Provider value={value}> */}
-            <ThemePicker />
-            {/* </CreateThemeContext.Provider> */}
+            {/* @ts-ignore */}
+            <ThemeContext.Provider value={value}>
+                <ThemePicker />
+                {/* @ts-ignore */}
+            </ThemeContext.Provider>
         </div>
     );
 };

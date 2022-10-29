@@ -1,5 +1,5 @@
-export interface MockData {
-    id: number; //backend
+export interface MockDataSample {
+    id: string;
     createdAt: string; //backend
     url: string; //backend
     name: string;
@@ -18,6 +18,12 @@ export interface ThemeCardItem {
     name: string;
     colors: Color[];
 }
+
+export type ThemeContextValue = {
+    creatorId: number;
+    name: string;
+    colors: Color[];
+};
 
 // type P = Array<string>;
 
