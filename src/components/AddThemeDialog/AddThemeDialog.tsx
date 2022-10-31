@@ -13,6 +13,7 @@ import { AddCircle, Preview } from '@mui/icons-material';
 import { ThemeCardItem } from '../../types/types';
 import { MuiColorInput } from 'mui-color-input';
 import { guid } from '../../helpers/guid';
+import { hexToRgb } from '../../helpers/hexToRgb';
 
 interface AddThemeDialogProps {
     isOpen: boolean;
@@ -21,19 +22,22 @@ interface AddThemeDialogProps {
 }
 
 const AddThemeDialog = ({ isOpen, onClose, onAdd }: AddThemeDialogProps) => {
+    //* Obiekt wybranych kolorów
     const [pickedColors, setPickedColors] = useState({
         first: '#ffffff',
         second: '#000000',
         third: '#222dfe',
-        forth: '#fdafda',
-        fifth: '#43fa45',
+        forth: '',
+        fifth: '',
     });
 
+    //* Obiekt opcji dodatkowych informujący o tym, czy zostały wybrane dodatkowe kolory (3-5)
     const [additionalOptions, setAdditionalOptions] = useState({
         forthTheme: false,
         fifthTheme: false,
     });
 
+    //* Obiekt "nowego" lokalnego theme'a, który docelowo będzie przesyłany w momencie tworzenia po wybraniu wszystkich opcji
     const [newTheme, setNewTheme] = useState({
         id: guid(),
         creatorId: 'user_11',
@@ -41,17 +45,17 @@ const AddThemeDialog = ({ isOpen, onClose, onAdd }: AddThemeDialogProps) => {
         colors: [
             {
                 hex: pickedColors.first,
-                rgb: 'rgb(255, 255, 255)',
+                rgb: hexToRgb(pickedColors.first),
                 hsl: '',
             },
             {
                 hex: pickedColors.second,
-                rgb: 'rgb(0, 0, 0)',
+                rgb: hexToRgb(pickedColors.second),
                 hsl: '',
             },
             {
                 hex: pickedColors.third,
-                rgb: 'rgb(0, 0, 255)',
+                rgb: hexToRgb(pickedColors.third),
                 hsl: '',
             },
         ],
@@ -62,26 +66,28 @@ const AddThemeDialog = ({ isOpen, onClose, onAdd }: AddThemeDialogProps) => {
     // const colorsBoxRef = createRef();
 
     const handlePickedColor = (color: string, order: string) => {
-        // console.log(color, order);
         setPickedColors((prev) => ({
             ...prev,
             [order]: color,
         }));
     };
 
+    //* DODAWANIE NOWEGO THEME
     const handleAddTheme = (theme: any) => {
-        console.log(guid());
-        onAdd(theme);
+        setNewTheme((prev) => ({
+            ...prev,
+            ...theme,
+        }));
+        onAdd(newTheme);
         onClose();
     };
 
+    //* DODANIE KOLEJNEGO KOLORU DO AKTUALNEGO THEME
     const addAnotherColor = () => {
         // console.log(colorsBoxRef.current);
         // const p = <MuiColorInput value={pickedColors.forth} onChange={handlePickedColor} />;
-        //@ts-ignore
         // colorsBoxRef.current.appendChild(p);
 
-        // three color pickers available
         if (Object.values(additionalOptions).every((opt) => opt === true)) {
             setShowWarning(true);
             setTimeout(() => {
@@ -171,3 +177,8 @@ const AddThemeDialog = ({ isOpen, onClose, onAdd }: AddThemeDialogProps) => {
 };
 
 export default AddThemeDialog;
+
+// #1 - Dlaczego nie mogłem posłużyć się appendChild i ref, aby dodać kolejne pickery?
+// #2 - Handler addTheme odczytuje mi nową wartość dopiero przy kolejnej aktualizacji stanu, jak temu zapobiec?
+// #3 - Czy podejście z logiką obsługi color pickerów jests słuszne?
+// #4 - Czy mógłbyś przeprowadzić naprowadzające code review na tym etapie?
