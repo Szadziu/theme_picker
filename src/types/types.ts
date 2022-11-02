@@ -25,6 +25,17 @@ export type ThemeContextValue = {
     colors: Color[];
 };
 
+export interface AddThemeDialogProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onAdd: (theme: any) => void;
+}
+
+export interface WarningAlertProps {
+    show: boolean;
+    children?: React.ReactNode;
+}
+
 // type P = Array<string>;
 
 // type U<T> = Array<T>;

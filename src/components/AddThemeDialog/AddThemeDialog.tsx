@@ -1,94 +1,70 @@
-import { createRef, useRef, useState } from 'react';
-import {
-    Box,
-    Button,
-    Card,
-    CardContent,
-    CardActions,
-    Dialog,
-    TextField,
-    Alert,
-} from '@mui/material';
-import { AddCircle, Preview } from '@mui/icons-material';
-import { ThemeCardItem } from '../../types/types';
+import { ChangeEvent, useState } from 'react';
+import { Box, Button, Card, CardContent, CardActions, Dialog, TextField } from '@mui/material';
+import { AddCircle } from '@mui/icons-material';
 import { MuiColorInput } from 'mui-color-input';
+import type { AddThemeDialogProps } from '../../types/types';
 import { guid } from '../../helpers/guid';
-import { hexToRgb } from '../../helpers/hexToRgb';
-
-interface AddThemeDialogProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onAdd: (theme: any) => void;
-}
+import WarningAlert from '../WarningAlert/WarningAlert';
 
 const AddThemeDialog = ({ isOpen, onClose, onAdd }: AddThemeDialogProps) => {
-    //* Obiekt wybranych kolorów
-    const [pickedColors, setPickedColors] = useState({
-        first: '#ffffff',
-        second: '#000000',
-        third: '#222dfe',
-        forth: '',
-        fifth: '',
-    });
-
-    //* Obiekt opcji dodatkowych informujący o tym, czy zostały wybrane dodatkowe kolory (3-5)
-    const [additionalOptions, setAdditionalOptions] = useState({
-        forthTheme: false,
-        fifthTheme: false,
-    });
-
-    //* Obiekt "nowego" lokalnego theme'a, który docelowo będzie przesyłany w momencie tworzenia po wybraniu wszystkich opcji
-    const [newTheme, setNewTheme] = useState({
+    const [pickedColors, setPickedColors] = useState<Array<string>>([]);
+    const [isValidTheme, setIsValidTheme] = useState(true);
+    const [newTheme, setNewTheme] = useState<any>({
         id: guid(),
         creatorId: 'user_11',
         name: '',
-        colors: [
-            {
-                hex: pickedColors.first,
-                rgb: hexToRgb(pickedColors.first),
-                hsl: '',
-            },
-            {
-                hex: pickedColors.second,
-                rgb: hexToRgb(pickedColors.second),
-                hsl: '',
-            },
-            {
-                hex: pickedColors.third,
-                rgb: hexToRgb(pickedColors.third),
-                hsl: '',
-            },
-        ],
+        colors: [],
     });
-
     const [showWarning, setShowWarning] = useState(false);
 
-    // const colorsBoxRef = createRef();
-
-    const handlePickedColor = (color: string, order: string) => {
-        setPickedColors((prev) => ({
-            ...prev,
-            [order]: color,
-        }));
+    const handleNameChange = (event: ChangeEvent<HTMLInputElement>) => {
+        setNewTheme((prev: any) => ({ ...prev, name: event.target.value }));
+        validateThemeForm();
     };
 
-    //* DODAWANIE NOWEGO THEME
+    //* WYBIERANIE KOLORU
+    const handleColorChange = (color: string, index: number) => {
+        setPickedColors((prev) => {
+            const newColors = [...prev];
+            newColors[index] = color;
+
+            return newColors;
+        });
+    };
+
+    const handleBlurChange = (index: number): void => {
+        setNewTheme((prev: any) => {
+            const newColors = [...prev.colors];
+            newColors[index] = { hex: '', hsl: '', rgb: pickedColors[index] };
+
+            return {
+                ...prev,
+                colors: newColors,
+            };
+        });
+    };
+
+    //* DODAWANIE THEME DO KONTA
     const handleAddTheme = (theme: any) => {
-        setNewTheme((prev) => ({
+        setNewTheme((prev: any) => ({
             ...prev,
             ...theme,
         }));
+
+        if (!validateThemeForm()) return;
+
         onAdd(newTheme);
+        resetForm();
         onClose();
     };
 
-    //* DODANIE KOLEJNEGO KOLORU DO AKTUALNEGO THEME
+    //* DODANIE KOLEJNEGO KOLORU DO AKTUALNIE TWORZONEGO THEME'A
     const addAnotherColor = () => {
-        // console.log(colorsBoxRef.current);
-        // const p = <MuiColorInput value={pickedColors.forth} onChange={handlePickedColor} />;
-        // colorsBoxRef.current.appendChild(p);
+        if (pickedColors.length < 5) {
+            setPickedColors((prev) => [...prev, '#fff']);
+        }
 
-        if (Object.values(additionalOptions).every((opt) => opt === true)) {
+        if (pickedColors.length >= 5) {
             setShowWarning(true);
             setTimeout(() => {
                 setShowWarning(false);
@@ -96,32 +72,42 @@ const AddThemeDialog = ({ isOpen, onClose, onAdd }: AddThemeDialogProps) => {
             return;
         }
 
-        if (additionalOptions.forthTheme === false) {
-            setAdditionalOptions((prev) => ({ ...prev, forthTheme: true }));
-        } else if (additionalOptions.fifthTheme === false) {
-            setAdditionalOptions((prev) => ({ ...prev, fifthTheme: true }));
-        }
+        //! podłożenie funkcji konstruktora pod callback metod tablicowych
+        // function x(arg: any) {return arg}
+        // const abc = (opt) => opt === true
+        // if (Object.values(additionalOptions).every(Boolean))
     };
 
-    const warningAlert = showWarning && (
-        <Alert severity="warning">
-            You have exceeded the limit of colors that can be added to one theme!
-        </Alert>
-    );
+    const renderColorInputs = () => {
+        return pickedColors.map((pickedColor, index) => (
+            <MuiColorInput
+                key={`pck_${index}`}
+                value={pickedColor}
+                onChange={(color) => handleColorChange(color, index)}
+                onBlur={() => handleBlurChange(index)}
+            />
+        ));
+    };
 
-    const forthThemeColorPicker = additionalOptions.forthTheme ? (
-        <MuiColorInput
-            value={pickedColors.forth}
-            onChange={(color) => handlePickedColor(color, 'forth')}
-        />
-    ) : null;
+    const validateThemeForm = () => {
+        if (newTheme.name === '') {
+            setIsValidTheme(false);
+            return;
+        }
+        if (pickedColors.length === 0) {
+            // setShowWarning(true);
+            return;
+        }
+        setIsValidTheme(true);
+        return true;
+    };
 
-    const fifthThemeColorPicker = additionalOptions.fifthTheme ? (
-        <MuiColorInput
-            value={pickedColors.fifth}
-            onChange={(color) => handlePickedColor(color, 'fifth')}
-        />
-    ) : null;
+    const resetForm = () => {
+        setNewTheme({
+            name: '',
+        });
+        setPickedColors([]);
+    };
 
     return (
         <Dialog open={isOpen}>
@@ -132,7 +118,14 @@ const AddThemeDialog = ({ isOpen, onClose, onAdd }: AddThemeDialogProps) => {
                             mb: 2,
                         }}
                     >
-                        <TextField label="Name" fullWidth value={newTheme.name} />
+                        <TextField
+                            label="Name"
+                            fullWidth
+                            value={newTheme.name}
+                            onChange={handleNameChange}
+                            error={!isValidTheme}
+                            variant="standard"
+                        />
                     </Box>
                     <Box
                         sx={{
@@ -141,24 +134,10 @@ const AddThemeDialog = ({ isOpen, onClose, onAdd }: AddThemeDialogProps) => {
                             gap: 1,
                             mb: 2,
                         }}
-                        // ref={colorsBoxRef}
                     >
-                        <MuiColorInput
-                            value={pickedColors.first}
-                            onChange={(color) => handlePickedColor(color, 'first')}
-                        />
-                        <MuiColorInput
-                            value={pickedColors.second}
-                            onChange={(color) => handlePickedColor(color, 'second')}
-                        />
-                        <MuiColorInput
-                            value={pickedColors.third}
-                            onChange={(color) => handlePickedColor(color, 'third')}
-                        />
-                        {forthThemeColorPicker}
-                        {fifthThemeColorPicker}
+                        <>{renderColorInputs()}</>
                     </Box>
-                    {warningAlert}
+                    <WarningAlert show={showWarning}>Dodaj więcej kolorów</WarningAlert>
                     <Button
                         endIcon={<AddCircle />}
                         onClick={addAnotherColor}
@@ -178,7 +157,4 @@ const AddThemeDialog = ({ isOpen, onClose, onAdd }: AddThemeDialogProps) => {
 
 export default AddThemeDialog;
 
-// #1 - Dlaczego nie mogłem posłużyć się appendChild i ref, aby dodać kolejne pickery?
-// #2 - Handler addTheme odczytuje mi nową wartość dopiero przy kolejnej aktualizacji stanu, jak temu zapobiec?
-// #3 - Czy podejście z logiką obsługi color pickerów jests słuszne?
-// #4 - Czy mógłbyś przeprowadzić naprowadzające code review na tym etapie?
+// otypować całość
