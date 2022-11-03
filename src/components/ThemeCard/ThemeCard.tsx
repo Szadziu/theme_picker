@@ -12,12 +12,12 @@ const ThemeCard = ({ item }: ThemeCardProps) => {
             <Divider />
             <Grid container alignItems="center" justifyContent="space-around" marginTop={1}>
                 {item.colors.map((color: any) => (
-                    <Grid item key={color.rgb}>
+                    <Grid item key={color}>
                         <Box
                             height={100}
                             width={100}
                             borderRadius={1}
-                            sx={{ backgroundColor: color.rgb }}
+                            sx={{ backgroundColor: color }}
                         ></Box>
                     </Grid>
                 ))}
